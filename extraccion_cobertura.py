@@ -95,9 +95,8 @@ df = pd.DataFrame(rows)
 print(df)
 
 # ---------------------------------------------------------------------
-# 5. Copia local + exportacion a Drive/ERA5_Corrientes
+# 5. Copia local
 # ---------------------------------------------------------------------
 local_csv = "Corrientes_Forest_Cover_2015_2025.csv"
 df.to_csv(local_csv, index=False)
 print(f"Copia local guardada en: {local_csv}")
-
