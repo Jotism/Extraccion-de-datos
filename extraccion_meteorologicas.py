@@ -1,21 +1,29 @@
 """
 Exporta variables diarias (2015-01-01 a 2025-12-31) para la provincia de
-Corrientes (Argentina), usando Google Earth Engine.
+Corrientes (Argentina), usando Google Earth Engine, y las guarda como
+CSV LOCALES (con pandas) en vez de subirlas a Google Drive.
 
-Genera un grupo de tablas (una por cada año) con la siguiente estructura:
+Genera un CSV por año con la siguiente estructura:
 
     Variables meteorológicas de ECMWF/ERA5/HOURLY (una fila por día):
-       temperature_2m_d, max_temperature_2m_d, min_temperature_2m_d, 
+       temperature_2m_d, max_temperature_2m_d, min_temperature_2m_d,
        dewpoint_temperature_2m_d, humidity_d, surface_pressure_d,
        total_precipitation_d, u_component_of_wind_10m_d, v_component_of_wind_10m_d
-     Se exportan en 11 tareas (una por año) hacia Google Drive.
+
+Los datos se traen mes a mes (getInfo) en vez de todo el año junto: así
+cada pedido a Earth Engine es chico y no se golpea con el límite de
+tiempo de cómputo de las llamadas interactivas.
 
 Requisitos previos:
-  pip install earthengine-api
+  pip install earthengine-api pandas
   Un proyecto de Google Cloud con la Earth Engine API habilitada.
 """
 
+import os
+import time
+
 import ee
+import pandas as pd
 
 # --------------------------------------------------------------------
 # 1) Autenticación e inicialización
@@ -52,6 +60,9 @@ SCALE = 27830  # resolución nativa de ERA5 (~27.8 km)
 # (ART = UTC-3). Con 0 los días se calculan en UTC. Con 3, el día
 # calendario arranca a las 00:00 hora argentina.
 OFFSET_HOURS = 0
+
+# Carpeta local donde se guardan todos los CSV de este proyecto
+OUTPUT_DIR = 'salidas_corrientes'
 
 
 def hourly_relative_humidity(img):
@@ -141,33 +152,50 @@ def build_daily_collection(start_str, end_str):
 
 
 COLUMNS = [
-    'date', 'temperature_2m_d', 'max_temperature_2m_d', 'min_temperature_2m_d', 
-    'dewpoint_temperature_2m_d', 'humidity_d', 'surface_pressure_d', 
+    'date', 'temperature_2m_d', 'max_temperature_2m_d', 'min_temperature_2m_d',
+    'dewpoint_temperature_2m_d', 'humidity_d', 'surface_pressure_d',
     'total_precipitation_d', 'u_component_of_wind_10m_d', 'v_component_of_wind_10m_d',
 ]
 
+
+def fc_to_dataframe(fc, max_retries=3, retry_wait=5):
+    """Trae una ee.FeatureCollection como pandas.DataFrame vía getInfo(),
+    con un par de reintentos por si el pedido falla de forma transitoria."""
+    last_err = None
+    for attempt in range(1, max_retries + 1):
+        try:
+            info = fc.getInfo()
+            rows = [f['properties'] for f in info['features']]
+            return pd.DataFrame(rows)
+        except Exception as err:  # noqa: BLE001
+            last_err = err
+            print(f'    reintento {attempt}/{max_retries} tras error: {err}')
+            time.sleep(retry_wait)
+    raise last_err
+
+
 # --------------------------------------------------------------------
-# 4) Exportar variables meteorológicas, una tarea por año
+# 4) Traer variables meteorológicas mes a mes y guardar un CSV por año
 # --------------------------------------------------------------------
-tasks = []
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
 for year in range(2015, 2026):
-    start_str = f'{year}-01-01'
-    end_str = f'{year + 1}-01-01'
+    year_frames = []
+    for month in range(1, 13):
+        start_str = f'{year}-{month:02d}-01'
+        end_str = f'{year + 1}-01-01' if month == 12 else f'{year}-{month + 1:02d}-01'
 
-    fc = build_daily_collection(start_str, end_str)
+        fc = build_daily_collection(start_str, end_str)
+        df_month = fc_to_dataframe(fc)
+        year_frames.append(df_month)
+        print(f'  [{year}-{month:02d}] {len(df_month)} días descargados')
+        time.sleep(0.2)  # ser prolijo con la API
 
-    task = ee.batch.Export.table.toDrive(
-        collection=fc,
-        description=f'Corrientes_variables_diarias_{year}',
-        folder='ERA5_Corrientes',
-        fileNamePrefix=f'corrientes_variables_diarias_{year}',
-        fileFormat='CSV',
-        selectors=COLUMNS,
-    )
-    task.start()
-    tasks.append(task)
-    print(f'[ERA5] Tarea enviada para {year}: {task.id}')
+    df_year = pd.concat(year_frames, ignore_index=True)
+    df_year = df_year[COLUMNS].sort_values('date').reset_index(drop=True)
 
-print('\nProgreso de las tareas:')
-print('https://code.earthengine.google.com/tasks')
-print('Las tablas se guardan en la carpeta "ERA5_Corrientes" en Google Drive')
+    output_path = os.path.join(OUTPUT_DIR, f'corrientes_variables_diarias_{year}.csv')
+    df_year.to_csv(output_path, index=False)
+    print(f'[ERA5] Guardado: {output_path} ({len(df_year)} filas)\n')
+
+print(f'Listo. Los {2025 - 2015 + 1} CSV quedaron en la carpeta "{OUTPUT_DIR}/".')

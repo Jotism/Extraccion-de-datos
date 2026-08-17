@@ -1,17 +1,21 @@
 """
 Exporta variables de elevacion de la provincia de Corrientes
-(Argentina), usando el producto CGIAR/SRTM90_V4.
+(Argentina), usando el producto CGIAR/SRTM90_V4, y las guarda como CSV
+LOCAL (con pandas) en vez de subirlas a Google Drive.
 
-SRTM90_V4 es el conjunto de datos de elevación digital de la Misión 
-Topográfica con Radar del Transbordador (SRTM), se produjo originalmente 
-para proporcionar datos de elevación coherentes y de alta calidad con un 
-alcance casi global
+SRTM90_V4 es el conjunto de datos de elevación digital de la Misión
+Topográfica con Radar del Transbordador (SRTM), se produjo originalmente
+para proporcionar datos de elevación coherentes y de alta calidad con un
+alcance casi global.
 
 Requisitos previos:
-  pip install earthengine-api
+  pip install earthengine-api pandas
   Un proyecto de Google Cloud con la Earth Engine API habilitada.
 """
+import os
+
 import ee
+import pandas as pd
 
 # --------------------------------------------------------------------
 # 1) Autenticación e inicialización
@@ -59,18 +63,18 @@ stats_feature = ee.Feature(None, {
 stats_collection = ee.FeatureCollection([stats_feature])
 
 # --------------------------------------------------------------------
-# 4) Exportar a Drive
+# 4) Traer el resultado (getInfo) y guardar CSV local
 # --------------------------------------------------------------------
-task = ee.batch.Export.table.toDrive(
-    collection=stats_collection,
-    description='Estadisticas_Elevacion_Corrientes',
-    folder='ERA5_Corrientes',
-    fileNamePrefix='corrientes_variables_elevacion',
-    fileFormat='CSV',
-    selectors=['region', 'min_elevation_d', 'max_elevation_d', 'mean_elevation_d', 'stdDev_elevation_d', 'variance_elevation_d']
-)
+OUTPUT_DIR = 'salidas_corrientes'
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-task.start()
-print(f'Tarea de datos de elevacion enviada: {task.id}')
-print('Progreso de la tarea: https://code.earthengine.google.com/tasks')
-print('Se guarda como "corrientes_ndvi_mensual_2015_2025.csv" en la carpeta "ERA5_Corrientes" en Drive.')
+info = stats_collection.getInfo()
+df = pd.DataFrame([f['properties'] for f in info['features']])
+df = df[['region', 'min_elevation_d', 'max_elevation_d', 'mean_elevation_d',
+         'stdDev_elevation_d', 'variance_elevation_d']]
+
+output_path = os.path.join(OUTPUT_DIR, 'corrientes_variables_elevacion.csv')
+df.to_csv(output_path, index=False)
+
+print(f'Guardado: {output_path}')
+print(df.to_string(index=False))
