@@ -94,19 +94,19 @@ def build_daily_collection(start_str, end_str):
         hourly = era5_hourly.filterDate(d0, d1)
 
         t2m = hourly.select('temperature_2m')
-        temp_mean = t2m.mean().subtract(273.15).rename('temperature_2m_d')
-        temp_max = t2m.max().subtract(273.15).rename('max_temperature_2m_d')
-        temp_min = t2m.min().subtract(273.15).rename('min_temperature_2m_d')
+        temp_mean = t2m.mean().rename('temperature_2m_d')
+        temp_max = t2m.max().rename('max_temperature_2m_d')
+        temp_min = t2m.min().rename('min_temperature_2m_d')
 
         dewpoint_mean = (
-            hourly.select('dewpoint_temperature_2m').mean().subtract(273.15)
+            hourly.select('dewpoint_temperature_2m').mean()
             .rename('dewpoint_temperature_2m_d')
         )
 
         humidity_mean = hourly.map(hourly_relative_humidity).mean().rename('humidity_d')
 
         pressure_mean = (
-            hourly.select('surface_pressure').mean().divide(100)
+            hourly.select('surface_pressure').mean()
             .rename('surface_pressure_d')
         )
 
