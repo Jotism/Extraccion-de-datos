@@ -36,7 +36,7 @@ COUNTRY_CODE = pycountry.countries.search_fuzzy(ADMIN0_NAME)[0].alpha_2
 REGION_CODE = ""
 START_YEAR = 2015
 END_YEAR = 2015
-OUTPUT_DIR = "salidas_corrientes"
+OUTPUT_DIR = "Resultados_tablas"
 
 def find_subdivision_code_fuzzy(country_alpha2, region_name):
     subs = list(pycountry.subdivisions.get(country_code=country_alpha2))
