@@ -13,6 +13,7 @@ from .cobertura import ForestCoverExtractor
 from .meteorologicas import MeteorologicalExtractor
 from .ndvi import NDVIExtractor
 from .topograficas import TopographicExtractor
+from .dataset_builder import UnifiedDatasetBuilder
 
 __all__ = [
     "BaseEEExtractor",
@@ -21,4 +22,5 @@ __all__ = [
     "MeteorologicalExtractor",
     "NDVIExtractor",
     "TopographicExtractor",
+    "UnifiedDatasetBuilder",
 ]
