@@ -189,19 +189,3 @@ El dataset diario unificado incluye las siguientes columnas en orden estandariza
 | `variance_elevation_d` | Decimal | Varianza de la elevación | $m^2$ |
 
 ---
-
-## 🤖 Consideraciones para el Entrenamiento de IA
-
-Al utilizar este dataset para entrenar modelos predictivos (e.g. LSTMs, Transformers, XGBoost o Agentes de IA epidémicos):
-
-1. **Conversión de Temperaturas:**  
-   Las temperaturas provienen en grados Kelvin ($K$). Para convertirlas a Celsius:
-   $$T_{°C} = T_K - 273.15$$
-2. **Imputación y Frecuencia de NDVI:**  
-   El NDVI tiene resolución mensual y se repite en cada día del mes. Para modelos sensibles a escalones artificiales, se sugiere aplicar una interpolación temporal suave (spline o lineal diaria).
-3. **Métricas Estáticas vs. Dinámicas:**  
-   Las variables de elevación y área son estáticas. En modelos espaciotemporales o multi-región sirven como variables de contexto territorial (*embeddings* o metadatos de región).
-4. **Lags Temporales (Rezago):**  
-   El ciclo biológico del mosquito *Aedes aegypti* y la transmisión del dengue presentan retardos fisiológicos de entre 2 y 8 semanas respecto a eventos climáticos (acumulación de lluvias y rangos óptimos de temperatura de 24°C - 30°C). Se recomienda generar características con desfase (*lag features* de 7, 14, 21 y 28 días).
-5. **Cruce con Datos Epidemiológicos:**  
-   Este dataset proporciona las covariables ambientales (*features* o matriz $X$). Deberá unirse por clave `(Date, region_code)` con los registros de casos confirmados/sospechosos de dengue (variable objetivo $y$).

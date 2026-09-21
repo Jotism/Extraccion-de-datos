@@ -86,6 +86,8 @@ def run_unified_dataset():
     builder.save(output_dir=OUTPUT_DIR)
 
 def main():
+    
+    # Si necesitas los CSVs aislados por variable, descomenta la siguiente línea:
     #run_individual_extractions()
     run_unified_dataset()
     print(f'\nListo. Todos los CSV quedaron en la carpeta "{OUTPUT_DIR}/".')
