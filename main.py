@@ -1,6 +1,6 @@
 """
 Script principal: ejecuta todas las extracciones de datos de Earth
-Engine (área, cobertura forestal, meteorológicas, NDVI, topográficas)
+Engine (área, cobertura forestal(WIP), meteorológicas, NDVI, topográficas)
 para una zona y rango de años determinados, guarda cada una como CSV
 local, y además arma un dataset diario unificado con todas las
 variables juntas.
@@ -14,7 +14,7 @@ import difflib
 
 from ee_extractors import (
     AreaExtractor,
-    ForestCoverExtractor,
+    # ForestCoverExtractor (WIP),
     MeteorologicalExtractor,
     NDVIExtractor,
     TopographicExtractor,
@@ -32,11 +32,12 @@ from ee_extractors import (
 # ---------------------------------------------------------------------
 ADMIN0_NAME = "Argentina"
 ADMIN1_NAME = "Corrientes"
+START_YEAR = 2001
+END_YEAR = 2001
+OUTPUT_DIR = "Resultados_tablas"
+
 COUNTRY_CODE = pycountry.countries.search_fuzzy(ADMIN0_NAME)[0].alpha_2
 REGION_CODE = ""
-START_YEAR = 2015
-END_YEAR = 2015
-OUTPUT_DIR = "Resultados_tablas"
 
 def find_subdivision_code_fuzzy(country_alpha2, region_name):
     subs = list(pycountry.subdivisions.get(country_code=country_alpha2))
@@ -54,10 +55,11 @@ def run_individual_extractions():
     print("=== Área ===")
     AreaExtractor(ADMIN0_NAME, ADMIN1_NAME).save(output_dir=OUTPUT_DIR)
 
-    print("\n=== Cobertura forestal ===")
-    ForestCoverExtractor(
-        ADMIN0_NAME, ADMIN1_NAME, START_YEAR, END_YEAR
-    ).save(output_dir=OUTPUT_DIR)
+    # --- Work In Progress ---
+    #print("\n=== Cobertura forestal ===")
+    #ForestCoverExtractor(
+    #    ADMIN0_NAME, ADMIN1_NAME, START_YEAR, END_YEAR
+    #).save(output_dir=OUTPUT_DIR)
 
     print("\n=== Variables meteorológicas ===")
     MeteorologicalExtractor(
@@ -84,7 +86,7 @@ def run_unified_dataset():
     builder.save(output_dir=OUTPUT_DIR)
 
 def main():
-    run_individual_extractions()
+    #run_individual_extractions()
     run_unified_dataset()
     print(f'\nListo. Todos los CSV quedaron en la carpeta "{OUTPUT_DIR}/".')
 

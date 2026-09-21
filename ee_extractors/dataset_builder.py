@@ -6,7 +6,7 @@ La granularidad final es diaria (la de MeteorologicalExtractor, que es
 la más fina de las 5). El resto de las variables se "pegan" a cada
 fila diaria repitiendo su valor:
   - NDVI_d           -> mismo valor para todos los días de un mes
-  - Forest_Cover_Percent -> mismo valor para todos los días de un año
+  - Forest_Cover_Percent (WIP) -> mismo valor para todos los días de un año
   - area_km2 y elevación -> mismo valor para todas las filas (estáticas)
 Esto es intencional: cada fila diaria queda con la mejor información
 disponible a esa fecha para cada variable, aunque no todas se midan
@@ -18,7 +18,7 @@ import os
 import pandas as pd
 
 from .area import AreaExtractor
-from .cobertura import ForestCoverExtractor
+# from .cobertura import ForestCoverExtractor (WIP)
 from .meteorologicas import MeteorologicalExtractor
 from .ndvi import NDVIExtractor
 from .topograficas import TopographicExtractor
@@ -26,7 +26,7 @@ from .topograficas import TopographicExtractor
 
 class UnifiedDatasetBuilder:
     """
-    Corre los 5 extractores (área, cobertura forestal, meteorológicas,
+    Corre los 5 extractores (área, cobertura forestal (WIP), meteorológicas,
     NDVI, topográficas) para una misma zona y rango de años, y arma un
     único dataset diario con la estructura:
 
@@ -36,7 +36,7 @@ class UnifiedDatasetBuilder:
         surface_pressure_d, temperature_2m_d, total_precipitation_d,
         u_component_of_wind_10m_d, v_component_of_wind_10m_d,
         max_elevation_d, mean_elevation_d, min_elevation_d,
-        stdDev_elevation_d, variance_elevation_d, Forest_Cover_Percent
+        stdDev_elevation_d, variance_elevation_d, Forest_Cover_Percent (WIP)
     """
 
     COLUMN_ORDER = [
@@ -49,12 +49,13 @@ class UnifiedDatasetBuilder:
         "u_component_of_wind_10m_d", "v_component_of_wind_10m_d",
         "max_elevation_d", "mean_elevation_d", "min_elevation_d",
         "stdDev_elevation_d", "variance_elevation_d",
-        "Forest_Cover_Percent",
+        #"Forest_Cover_Percent", WIP
     ]
 
     def __init__(self, admin0_name, admin1_name, start_year, end_year,
                  country_code, region_code,
-                 tree_cover_threshold=30, offset_hours=0):
+                 # tree_cover_threshold=30, (WIP) 
+                 offset_hours=0):
         """
         Parameters
         ----------
@@ -79,10 +80,11 @@ class UnifiedDatasetBuilder:
         self.region_code = region_code
 
         self.area_extractor = AreaExtractor(admin0_name, admin1_name)
-        self.forest_extractor = ForestCoverExtractor(
-            admin0_name, admin1_name, start_year, end_year,
-            tree_cover_threshold=tree_cover_threshold,
-        )
+        # WORK IN PROGRESS
+        #self.forest_extractor = ForestCoverExtractor(
+        #    admin0_name, admin1_name, start_year, end_year,
+        #    tree_cover_threshold=tree_cover_threshold,
+        #)
         self.meteo_extractor = MeteorologicalExtractor(
             admin0_name, admin1_name, start_year, end_year,
             offset_hours=offset_hours,
@@ -122,10 +124,10 @@ class UnifiedDatasetBuilder:
         df = df.merge(ndvi_df, on=["Year", "Month"], how="left")
 
         # --- 3) Cobertura forestal anual -> join por Year, se repite
-        #        en cada dia del anio ---
-        print("[Dataset] Extrayendo cobertura forestal (anual) ...")
-        forest_df = self.forest_extractor.extract()
-        df = df.merge(forest_df, on="Year", how="left")
+        #        en cada dia del anio --- WIP
+        ###print("[Dataset] Extrayendo cobertura forestal (anual) ...")
+        ###forest_df = self.forest_extractor.extract()
+        ###df = df.merge(forest_df, on="Year", how="left")
 
         # --- 4) Area (estatica) -> se repite en todas las filas ---
         print("[Dataset] Extrayendo area (estatica) ...")
